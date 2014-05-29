@@ -3,12 +3,12 @@
 #import <vector>
 #import <iostream>
 
-
-enum state {idle, set, 
+enum state {idle, set = 370, param = 1391, 
 			setN = 'N', setK = 'K', setH = 'H', setZ = 'Z',
-			setE = 'E'};
-
-#define SET 370
+			setE = 'E',
+			paramF = 'F', paramG = 'G', paramC = 'C',
+			paramS = 'S', paramT = 'T', paramL = 'L',
+			paramR = 'R', paramA = 'A'};
 
 using namespace std;
 			
@@ -18,14 +18,15 @@ int main(int argc, const char * argv[])
 {	
 	FILE *file = fopen(argv[1], "r");
 
-	int N = 0, K = 0, H = 0, Z = 0;
+	int N = 0, K = 0, H = 0, Z = 0, S=0, **T;
 	vector < pair <int, int> > E;
+	float *F, *C;
+	double G;
 	
 	char buffer[256];
 	int bufferCount = 0, value = 0;
 	
 	state state = idle;
-	
 	
 	while (file)
 	{
@@ -33,22 +34,34 @@ int main(int argc, const char * argv[])
 		
 		// Get word
 		switch (state)
-		{
+		{		
 			case idle:
 				do buffer[bufferCount++] = fgetc(file);
 				while (	buffer[bufferCount - 1] != ' ' && 
 						buffer[bufferCount - 1] != '\n' && 
 						buffer[bufferCount - 1] != EOF );		
 		
-				if(buffer[bufferCount - 1] == EOF) break;
+				if(buffer[bufferCount - 1] == EOF) return 0;
 				buffer[bufferCount - 1] = '\0';
+				//printf("\nIdle: %s [%i]\n\n", buffer, _hash(buffer));
 				switch (_hash(buffer))
 				{
-					case SET:
-					state = set;
+					case set:
+						state = set;
+						break;
+
+					case param:
+						state = param;
+						break;
+
+					default:
+						break;
 				}
 				break;
 			case set:
+				state = (enum state)fgetc(file);
+				break;
+			case param:
 				state = (enum state)fgetc(file);
 				break;
 			case setN:
@@ -76,6 +89,9 @@ int main(int argc, const char * argv[])
 				{
 					case setN:
 						N = value;
+						T = new int*[N];
+						for(int i=0 ; i<N ; i++)
+							T[i] = new int[N];
 						printf("\nN is %i\n", N);
 						break;
 					case setK:
@@ -84,23 +100,29 @@ int main(int argc, const char * argv[])
 						break;
 					case setH:
 						H = value;
+						F = new float[H];
+						C = new float[H];
 						printf("\nH is %i\n", H);
 						break;
 					case setZ:
 						Z = value;
-						printf("\nZ is %i\n", H);
-						return 0;
+						printf("\nZ is %i\n", Z);
+						break;
+					default:
 						break;
 				}
 				state = idle;
 				break;
 
 			case setE:
+			{
 				printf("E");
 				int values[2] = {0, 0};
 				int tmp = 0;
 
 				for(int i=0 ; i<2 ; i++) fgetc(file);	// :=
+				
+				bool breakNext = false;
 				while(1)
 				{
 					bufferCount = 0;
@@ -111,7 +133,7 @@ int main(int argc, const char * argv[])
 							buffer[bufferCount - 1] != ','&&
 							buffer[bufferCount - 1] != ';');
 					
-					if (buffer[bufferCount - 1] ==  ';') break;
+					if (buffer[bufferCount - 1] ==  ';') breakNext = true;
 
 					buffer[bufferCount - 1] = '\0';
 					value = atoi(buffer) != 0 ? atoi(buffer) : -1;
@@ -125,19 +147,120 @@ int main(int argc, const char * argv[])
 							E.push_back(make_pair(values[0], values[1] ));
 						}
 					}
-					
+					if (breakNext) break;	
 				}
 				state = idle;
 				break;
+			}
+			case paramF:
+			case paramC:
+			{
+				printf("F or C");
+				float value = 0;
+				int tmp = 0, tmp2 = 0;
+
+				for(int i=0 ; i<2 ; i++) fgetc(file);	// :=
 				
+				bool breakNext = false;
+				while(1)
+				{
+					bufferCount = 0;
+					do buffer[bufferCount++] = fgetc(file);
+					while (	buffer[bufferCount - 1] != '\t' &&
+							buffer[bufferCount - 1] != '\n'&&
+							buffer[bufferCount - 1] != ';');
+					
+					if (buffer[bufferCount - 1] ==  ';') breakNext = true;
+					
+					buffer[bufferCount - 1] = '\0';
+					value = atof(buffer) != 0 ? atof(buffer) : -1;
+				
+					if (value != -1 && tmp++ % 2 == 1)
+					{
+						switch(state)
+						{
+							case paramF:
+								F[tmp2++] = value;
+								break;
+							case paramC:
+								C[tmp2++] = value;
+								break;
+						}
+						printf("\n\thaving value %.2f", value);
+					}
+					if (breakNext) break;
+				}
+				
+				state = idle;
+				break;
+			}
+			case paramG:
+				printf("\nG\n");
+				for(int i=0 ; i<2 ; i++) fgetc(file);	// :=
+				bufferCount = 0;
+				do buffer[bufferCount++] = fgetc(file);
+				while (buffer[bufferCount - 1] != ';');
+				
+				G = atof(buffer);
+				printf("\nG is %f\n", G);
+				
+				state = idle;
+				break;
+
+			case paramS:
+				printf("\nS\n");
+				for(int i=0 ; i<2 ; i++) fgetc(file);	// :=
+				bufferCount = 0;
+				do buffer[bufferCount++] = fgetc(file);
+				while (buffer[bufferCount - 1] != ';');
 			
+				S = atoi(buffer);
+				printf("\nS is %i\n", S);
+			
+				state = idle;
+				break;
+			case paramT:
+			{
+				printf("\nT\n");
+				
+				do buffer[0] = fgetc(file);
+				while (buffer[0] != '\n');
+				
+				int tmp = 0;
+				while(1)
+				{
+					bufferCount = 0;
+					do buffer[bufferCount++] = fgetc(file);
+					while (	buffer[bufferCount - 1] != ' ' && 
+							buffer[bufferCount - 1] != '\t' &&
+							buffer[bufferCount - 1] != '\n' && 
+							buffer[bufferCount - 1] != ';');
+
+					if (buffer[bufferCount - 1] ==  ';') break;					
+					if (bufferCount < 2) continue;
+					
+					buffer[bufferCount - 1] = '\0';
+				
+					printf("\t|%i|%s|\n", tmp, buffer);
+					
+					value = atoi(buffer) != 0 ? atoi(buffer) : value;
+				}
+				
+				state = idle;
+				break;
+			}
+			case paramA:
+			case paramL:
+			case paramR:
+				printf("\nskip\n");
+				state = idle;
+				break;
+				//return 0;
 		}
-		//printf("|%s|%i|\n", buffer, hash(buffer));
 	}
 	
 	fclose(file);
 }
-
 
 int _hash(char* string)
 {
