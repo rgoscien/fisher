@@ -1,0 +1,21 @@
+No, Przy wezłach N nie potrzebuję zapisywać ich po kolei w tablicy tylko jakiś int ile ich jest (int N = 8). Podobnie przy K, H, Z.
+Dla E to będzie vector<pair<int,int>>. 
+F, C tablice normalne.
+G, S liczby.
+T czyli żądania. To będzie tablica Demand* demands (takie obiekty: src, dst, volume).
+L -> to będzie macierz int*** Lijk
+R -> to będzie macierz int**** Rijkhz 
+
+N # number of nodes in the ring network. in our simulations we considered only the case of 8 nodes.
+K # set of possible directions of a path connecting any node pair: 1=clockwise, 2=counterclockwise
+H # set of transceiver types. In our simulations we considered either one or two types
+E # set of physical links of the ring
+Z # set of possible numbers of intermediate regenerators between a source-destination pair: 1=no intermediate regenerators, 2=1 intermediate regenerator, 2=2 intermediate regenerators, and so on...
+F # optical bandwidth of one tranceiver. Assuming slices of 6.25 GHz, the transceiver of type 1 occupies 3 slices, i.e. 18.75 GHz, whereas the transceiver of type 2 occupies 5 slices (i.e. 31.25 GHz). Conversely, assuming slices of 12.5 GHz, type 1 transceiver occupies 2 slices (i.e. 25 GHz) and type 2 transceiver occupies 3 slices (i.e. 37.5 GHZ).
+G # width of one slice (we considered either 6.25 or 12.5 GHz)
+C # we assume that type 1 transceiver operating with BPSK modulation format can transmit up to 25 Gbps, whereas type 2 transmits up to 50 Gbps. Such basic capacity is increased by means of the capacity multiplier R, in case a given lightpath is short enough to be covered by more advanced modulation formats, which have lower reaches
+S # total available spectrum in GHz for each physical link. We fix S to 1 THz in all simulations
+T # Traffic matrix: requests are in Gbps. We considered either uniform traffic (i.e. all source/destination pair have the same traffic request) or one-to-all matrix (i.e. all traffic is originated/terminated by node 1, as in this instance). We considered scenarios with 20, 50, 100, 200, 500 Gbps traffic flows.
+L # L(i,j,k)=number of physical links traversed by lightpath i,j in direction k. Since we have 8 nodes, the maximum number of traversed links is 7 (e.g. a lightpath from node 1 to node 8 in clockwise direction traverses 7 links)
+R # R(i,j,k,h,z)=capacity multiplier for lightpath i,j, in direction k using tranceiver type x with z-1 intermediate regenerators. Such values depend on the ring radius (note that we assume that all the links have the same length): we considered radiuses of 100, 500, 1000 km. In particular, this instance assumes 500km. We used the reaches reported in table 1 of our BLTJ paper to find the most advanced modulation format which can be used over each lightpath and set the capacity multiplier accordingly. (e.g. in this instance 1 link is 500*2*pi/8=392.5 km long, so a lightpath from node 1 to 3 in clockwise direction without intermediate regenerators (z=1) spans 2 links, resulting in a total length of 785 km. Therefore, the most efficient modulation format for a type 2 transceiver occupying 31.25 GHz is 8-QAM and the corresponding capacity multiplier is 3. But if we place 1 intermediate regenerator in node 2, then we have two consecutive lighpaths spanning 1 link each, and according to table 1 the best modulation format is 16-QAM, therefore the capacity multiplier is 4. Note that we assume that regenerators are always colocated with a node, therefore not all the values of z are feasible: for example, we cannot have more than 1 regenerators on the lightpath from node 1 to 3 in clockwise direction, because we can place at most one regenerator in node 2, which is the only intermediate node. For the infeasible combinations, the capacity multiplier is set to 0. 
+A # A(i,j,k,i',j',k')=1 if lightpath from node i to node j in direction k and lightpath from node i' to node j' in direction k' traverse at least one common link (e.g. lightpath 1-3 in direction 1 and lightpath 2-4 in direction 1 share the link (2,3))
