@@ -3,7 +3,12 @@
 #import <vector>
 #import <iostream>
 
-enum state {idle, set = 370, param = 1391, 
+struct demand
+{
+	int src, dst, volume;
+};
+
+enum state {idle = 0, set = 370, param = 1391, 
 			setN = 'N', setK = 'K', setH = 'H', setZ = 'Z',
 			setE = 'E',
 			paramF = 'F', paramG = 'G', paramC = 'C',
@@ -11,15 +16,16 @@ enum state {idle, set = 370, param = 1391,
 			paramR = 'R', paramA = 'A'};
 
 using namespace std;
-			
+
 int _hash(char*);
 
 int main(int argc, const char * argv[])
-{	
+{
 	FILE *file = fopen(argv[1], "r");
 
-	int N = 0, K = 0, H = 0, Z = 0, S=0, **T;
+	int N = 0, K = 0, H = 0, Z = 0, S=0;
 	vector < pair <int, int> > E;
+	vector <demand> T;
 	float *F, *C;
 	double G;
 	
@@ -89,9 +95,6 @@ int main(int argc, const char * argv[])
 				{
 					case setN:
 						N = value;
-						T = new int*[N];
-						for(int i=0 ; i<N ; i++)
-							T[i] = new int[N];
 						printf("\nN is %i\n", N);
 						break;
 					case setK:
@@ -195,8 +198,7 @@ int main(int argc, const char * argv[])
 				break;
 			}
 			case paramG:
-				printf("\nG\n");
-				for(int i=0 ; i<2 ; i++) fgetc(file);	// :=
+				for(int i=0 ; i<2 ; i++) fgetc(file);		// :=
 				bufferCount = 0;
 				do buffer[bufferCount++] = fgetc(file);
 				while (buffer[bufferCount - 1] != ';');
@@ -208,8 +210,7 @@ int main(int argc, const char * argv[])
 				break;
 
 			case paramS:
-				printf("\nS\n");
-				for(int i=0 ; i<2 ; i++) fgetc(file);	// :=
+				for(int i=0 ; i<2 ; i++) fgetc(file);		// :=
 				bufferCount = 0;
 				do buffer[bufferCount++] = fgetc(file);
 				while (buffer[bufferCount - 1] != ';');
@@ -226,25 +227,43 @@ int main(int argc, const char * argv[])
 				do buffer[0] = fgetc(file);
 				while (buffer[0] != '\n');
 				
-				int tmp = 0;
+
+				int tmp = 0, src = 0, dst = 0;
 				while(1)
 				{
 					bufferCount = 0;
 					do buffer[bufferCount++] = fgetc(file);
 					while (	buffer[bufferCount - 1] != ' ' && 
 							buffer[bufferCount - 1] != '\t' &&
-							buffer[bufferCount - 1] != '\n' && 
+							buffer[bufferCount - 1] != '\n' &&
 							buffer[bufferCount - 1] != ';');
-
-					if (buffer[bufferCount - 1] ==  ';') break;					
-					if (bufferCount < 2) continue;
+					
+					if (buffer[bufferCount - 1] ==  ';') break;
+					if (bufferCount==1) continue;
 					
 					buffer[bufferCount - 1] = '\0';
-				
-					printf("\t|%i|%s|\n", tmp, buffer);
 					
-					value = atoi(buffer) != 0 ? atoi(buffer) : value;
+					dst = tmp % (N + 2);
+					
+					if(!dst) src = atoi(buffer);			// Index 0
+					else if (dst < N)						// Workaround
+					{
+						demand demand = (struct demand){src, dst, atoi(buffer)};
+													
+						if(demand.volume)
+						{
+							T.push_back(demand);
+							printf("\t%i -> %i : %i\n", demand.src,
+														demand.dst, 
+														demand.volume);
+						}
+					}
+					tmp++;
 				}
+				
+				printf("%lu elements pushed\n", T.size());
+				
+				return 0;
 				
 				state = idle;
 				break;
@@ -258,7 +277,6 @@ int main(int argc, const char * argv[])
 				//return 0;
 		}
 	}
-	
 	fclose(file);
 }
 
