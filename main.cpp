@@ -23,7 +23,7 @@ int main(int argc, const char * argv[])
 {
 	FILE *file = fopen(argv[1], "r");
 
-	int N = 0, K = 0, H = 0, Z = 0, S=0, ***L, *****R;
+	int N = 0, K = 0, H = 0, Z = 0, S=0, ***L, *****R, ******A;
 	vector < pair <int, int> > E;
 	vector <demand> T;
 	float *F, *C;
@@ -187,6 +187,8 @@ int main(int argc, const char * argv[])
 								break;
 							case paramC:
 								C[tmp2++] = value;
+								break;
+							default:
 								break;
 						}
 						printf("\n\thaving value %.2f", value);
@@ -447,7 +449,105 @@ int main(int argc, const char * argv[])
 				break;
 			}
 			case paramA:
-				printf("\nA\n");
+				printf("\nA [%i:%i:%i:%i:%i,%i]", N, N, K, N, N, K);
+				
+				A = new int*****[N];
+				for(int i=0 ; i<N ; i++)
+				{
+					A[i] = new int****[N];
+					for (int j=0 ; j<N ; j++)
+					{
+							A[i][j] = new int***[K];
+							for (int k=0 ; k<K ; k++)
+							{
+								A[i][j][k] = new int**[N];
+								for (int i_=0 ; i_<N ; i_++)
+								{
+									A[i][j][k][i_] = new int*[N];
+									for (int j_=0 ; j_<N ; j_++)
+										A[i][j][k][i_][j_] = new int[K];
+								}
+							}
+					}
+				}
+				
+				
+				for(int i=0 ; i<3 ; i++) fgetc(file);		// :=[
+				while(true)
+				{
+					// Odczytywanie adresu tablicy [*,*,2]
+					bool willBreak = false;
+					int kijk[4] = {0, 0, 0, 0};
+					int kijkCount = 0;
+					
+					while(1)
+					{
+						bufferCount = 0;
+						do buffer[bufferCount++] = fgetc(file);
+						while (	buffer[bufferCount - 1] != ',' &&
+								buffer[bufferCount - 1] != ']' &&
+								buffer[bufferCount - 1] != ':');
+					
+						if (buffer[bufferCount - 1] ==  ':') willBreak = true;
+						
+						if (buffer[bufferCount - 2] !=  '*' && bufferCount > 1)
+						{
+							buffer[bufferCount - 1] = '\0';
+							kijk[kijkCount++] = atoi(buffer);
+							printf("\n%i value is %i",kijkCount-1, kijk[kijkCount-1]);
+						}
+					
+						buffer[bufferCount - 1] = '\0';
+					
+						printf("\n[%s]", buffer);
+					
+						if (willBreak) break;
+					}
+					
+					kijkCount = 0;
+					printf("\n\n*:*:%i:%i:%i:%i\n\n", kijk[0], kijk[1], kijk[2], kijk[3]);
+					
+					bool lastTable = false;
+					// Odczytywanie tablicy
+					int tmp = 0, i = 0, j = 0, 
+						k = kijk[0], i_ = kijk[1], j_ = kijk[2], k_ = kijk[3], 
+						value = 0;
+						
+					
+					while(1)
+					{
+						bufferCount = 0;
+						do buffer[bufferCount++] = fgetc(file);
+						while (	buffer[bufferCount - 1] != ' ' && 
+								buffer[bufferCount - 1] != '\t' &&
+								buffer[bufferCount - 1] != '\n' &&
+								buffer[bufferCount - 1] != ';' &&
+								buffer[bufferCount - 1] != '[');
+				
+						if (buffer[bufferCount - 1] ==  '[') break;
+						if (buffer[bufferCount - 1] ==  ';')
+						{
+							lastTable = true;
+							break;
+						}
+						if (bufferCount==1) continue;
+				
+						buffer[bufferCount - 1] = '\0';
+				
+						i = tmp % (N + 2) - 1;
+						j = (tmp - 1) / (N + 2);
+				
+						if (tmp > N + 1 && i > 0)
+						{
+							value = atoi(buffer);
+							printf("%i:%i:%i:%i:%i:%i = %i\n",i, j, k, i_, j_, k_, value);
+							A[i-1][j-1][k-1][i_-1][j_-1][k_-1] = value;
+						}
+				
+						tmp++;
+					}
+					if(lastTable) break;
+				}
 				state = idle;
 				break;
 		}
