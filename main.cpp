@@ -260,11 +260,7 @@ int main(int argc, const char * argv[])
 					}
 					tmp++;
 				}
-				
 				printf("%lu elements pushed\n", T.size());
-				
-				return 0;
-				
 				state = idle;
 				break;
 			}
