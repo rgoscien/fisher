@@ -23,7 +23,7 @@ int main(int argc, const char * argv[])
 {
 	FILE *file = fopen(argv[1], "r");
 
-	int N = 0, K = 0, H = 0, Z = 0, S=0, ***L;
+	int N = 0, K = 0, H = 0, Z = 0, S=0, ***L, *****R;
 	vector < pair <int, int> > E;
 	vector <demand> T;
 	float *F, *C;
@@ -292,7 +292,7 @@ int main(int argc, const char * argv[])
 						{
 							buffer[bufferCount - 1] = '\0';
 							k = atoi(buffer);
-							printf("\nvalue %i", value);
+							printf("\nvalue %i", k);
 						}
 					
 						buffer[bufferCount - 1] = '\0';
@@ -344,9 +344,110 @@ int main(int argc, const char * argv[])
 				state = idle;
 				break;
 			}
-			case paramA:
+
 			case paramR:
-				printf("\nskip\n");
+			{
+				printf("R [%i:%i:%i:%i:%i]", N, N, K, H, Z);
+								
+				R = new int****[N];
+				for(int i=0 ; i<N ; i++)
+				{
+					R[i] = new int***[N];
+					for (int j=0 ; j<N ; j++)
+					{
+							R[i][j] = new int**[K];
+							for (int k=0 ; k<K ; k++)
+							{
+								R[i][j][k] = new int*[H];
+								for (int h=0 ; h<H ; h++)
+									R[i][j][k][h] = new int[Z];
+							}
+					}
+				}
+				
+				for(int i=0 ; i<3 ; i++) fgetc(file);		// :=[
+				
+				while(true)
+				{
+					// Odczytywanie adresu tablicy [*,*,2]
+					bool willBreak = false;
+					int khz[3] = {0, 0, 0};
+					int khzCount = 0;
+					
+					while(1)
+					{
+						bufferCount = 0;
+						do buffer[bufferCount++] = fgetc(file);
+						while (	buffer[bufferCount - 1] != ',' &&
+								buffer[bufferCount - 1] != ']' &&
+								buffer[bufferCount - 1] != ':');
+					
+						if (buffer[bufferCount - 1] ==  ':') willBreak = true;
+						
+						if (buffer[bufferCount - 2] !=  '*' && bufferCount > 1)
+						{
+							buffer[bufferCount - 1] = '\0';
+							khz[khzCount++] = atoi(buffer);
+							printf("\n%i value is %i",khzCount-1, khz[khzCount-1]);
+						}
+					
+						buffer[bufferCount - 1] = '\0';
+					
+						printf("\n[%s]", buffer);
+					
+						if (willBreak) break;
+					}
+					
+					khzCount = 0;
+					printf("\n\n*:*:%i:%i:%i\n\n", khz[0], khz[1], khz[2]);
+					//break;
+					
+					bool lastTable = false;
+					// Odczytywanie tablicy
+					int tmp = 0, i = 0, j = 0, 
+						k = khz[0], h = khz[1], z = khz[2], 
+						value = 0;
+						
+					
+					while(1)
+					{
+						bufferCount = 0;
+						do buffer[bufferCount++] = fgetc(file);
+						while (	buffer[bufferCount - 1] != ' ' && 
+								buffer[bufferCount - 1] != '\t' &&
+								buffer[bufferCount - 1] != '\n' &&
+								buffer[bufferCount - 1] != ';' &&
+								buffer[bufferCount - 1] != '[');
+				
+						if (buffer[bufferCount - 1] ==  '[') break;
+						if (buffer[bufferCount - 1] ==  ';')
+						{
+							lastTable = true;
+							break;
+						}
+						if (bufferCount==1) continue;
+				
+						buffer[bufferCount - 1] = '\0';
+				
+						i = tmp % (N + 2) - 1;
+						j = (tmp - 1) / (N + 2);
+				
+						if (tmp > N + 1 && i > 0)
+						{
+							value = atoi(buffer);
+							printf("%i:%i:%i:%i:%i = %i\n",i, j, k, h, z, value);
+							R[i-1][j-1][k-1][h-1][z-1] = value;
+						}
+				
+						tmp++;
+					}
+					if(lastTable) break;
+				}
+				state = idle;
+				break;
+			}
+			case paramA:
+				printf("\nA\n");
 				state = idle;
 				break;
 		}
