@@ -23,7 +23,7 @@ int main(int argc, const char * argv[])
 {
 	FILE *file = fopen(argv[1], "r");
 
-	int N = 0, K = 0, H = 0, Z = 0, S=0;
+	int N = 0, K = 0, H = 0, Z = 0, S=0, ***L;
 	vector < pair <int, int> > E;
 	vector <demand> T;
 	float *F, *C;
@@ -224,10 +224,9 @@ int main(int argc, const char * argv[])
 			{
 				printf("\nT\n");
 				
-				do buffer[0] = fgetc(file);
+				do buffer[0] = fgetc(file);					// Skip line
 				while (buffer[0] != '\n');
 				
-
 				int tmp = 0, src = 0, dst = 0;
 				while(1)
 				{
@@ -249,13 +248,10 @@ int main(int argc, const char * argv[])
 					else if (dst < N)						// Workaround
 					{
 						demand demand = (struct demand){src, dst, atoi(buffer)};
-													
 						if(demand.volume)
 						{
 							T.push_back(demand);
-							printf("\t%i -> %i : %i\n", demand.src,
-														demand.dst, 
-														demand.volume);
+							printf("\t%i -> %i : %i\n", demand.src, demand.dst, demand.volume);
 						}
 					}
 					tmp++;
@@ -264,13 +260,95 @@ int main(int argc, const char * argv[])
 				state = idle;
 				break;
 			}
-			case paramA:
 			case paramL:
+			{
+				printf("L [%i:%i:%i]", N, N, K);
+				L = new int**[N];
+				for(int i=0 ; i<N ; i++)
+				{
+					L[i] = new int*[N];
+					for (int j=0 ; j<N ; j++)
+						L[i][j] = new int[K];
+				}
+				
+				for(int i=0 ; i<3 ; i++) fgetc(file);		// :=[
+				
+				while(true)
+				{
+					// Odczytywanie adresu tablicy [*,*,2]
+					bool willBreak = false;
+					int k = 0;
+					while(1)
+					{
+						bufferCount = 0;
+						do buffer[bufferCount++] = fgetc(file);
+						while (	buffer[bufferCount - 1] != ',' &&
+								buffer[bufferCount - 1] != ']' &&
+								buffer[bufferCount - 1] != ':');
+					
+						if (buffer[bufferCount - 1] ==  ':') willBreak = true;
+					
+						if (buffer[bufferCount - 2] !=  '*' && bufferCount > 1)
+						{
+							buffer[bufferCount - 1] = '\0';
+							k = atoi(buffer);
+							printf("\nvalue %i", value);
+						}
+					
+						buffer[bufferCount - 1] = '\0';
+					
+						printf("\n[%s]", buffer);
+					
+						if (willBreak) break;
+					}
+				
+					printf("\n\n*:*:%i\n\n", k);
+				
+					bool lastTable = false;
+					// Odczytywanie tablicy
+					int tmp = 0, i = 0, j = 0, value = 0;
+					while(1)
+					{
+						bufferCount = 0;
+						do buffer[bufferCount++] = fgetc(file);
+						while (	buffer[bufferCount - 1] != ' ' && 
+								buffer[bufferCount - 1] != '\t' &&
+								buffer[bufferCount - 1] != '\n' &&
+								buffer[bufferCount - 1] != ';' &&
+								buffer[bufferCount - 1] != '[');
+					
+						if (buffer[bufferCount - 1] ==  '[') break;
+						if (buffer[bufferCount - 1] ==  ';')
+						{
+							lastTable = true;
+							break;
+						}
+						if (bufferCount==1) continue;
+					
+						buffer[bufferCount - 1] = '\0';
+					
+						i = tmp % (N + 2) - 1;
+						j = (tmp - 1) / (N + 2);
+					
+						if (tmp > N + 1 && i > 0)
+						{
+							value = atoi(buffer);
+							printf("%i:%i:%i = %i\n",i-1, j-1, k-1, value);
+							L[i-1][j-1][k-1] = value;
+						}
+					
+						tmp++;
+					}
+					if(lastTable) break;
+				}
+				state = idle;
+				break;
+			}
+			case paramA:
 			case paramR:
 				printf("\nskip\n");
 				state = idle;
 				break;
-				//return 0;
 		}
 	}
 	fclose(file);
